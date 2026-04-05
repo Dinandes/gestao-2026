@@ -1,0 +1,1500 @@
+import { useState } from "react";
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO GLOBAL DE MÓDULO — Múltipla Escolha
+// ═══════════════════════════════════════════════════════════════
+let _mq = null;
+let _mqIdx = 0;
+let _mqAnswered = false;
+let _mqScore = 0;
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — FLASHCARDS
+// ═══════════════════════════════════════════════════════════════
+const FLASHCARDS = [
+  { f: "Definição oficial de Qualidade (ISO)", v: "Conjunto das propriedades e características de um produto, processo ou serviço que lhe fornecem a capacidade de satisfazer as necessidades explícitas ou implícitas.", dica: "🎯 PROPRIEDADES + CARACTERÍSTICAS → satisfazer NECESSIDADES." },
+  { f: "O que é Qualidade Total?", v: "Processo utilizado para garantir o atendimento às necessidades e expectativas dos clientes (acionistas, funcionários, usuários e sociedade).", dica: "👥 4 clientes: acionistas, funcionários, usuários, sociedade." },
+  { f: "Trilogia Juran", v: "Planejamento da Qualidade, Controle da Qualidade e Aperfeiçoamento da Qualidade.", dica: "🔺 PCA: Planejar → Controlar → Aperfeiçoar." },
+  { f: "Eras da Qualidade (ordem)", v: "1ª Era da Inspeção → 2ª Era do Controle Estatístico → 3ª Era da Garantia da Qualidade → 4ª Era da GQT.", dica: "🕰️ ICGG: Inspeção, Controle, Garantia, Gestão." },
+  { f: "Fases do Ciclo PDCA", v: "Planejar (Plan), Executar (Do), Verificar (Check), Agir (Act).", dica: "💡 Plan→Do→Check→Act. Ciclo contínuo!" },
+  { f: "Fase A do PDCA", v: "Ação corretiva: padronizar métodos se a meta foi atingida, ou atuar corretivamente nos desvios se a meta não foi alcançada.", dica: "⚠️ A = Ação! Sucesso → padroniza. Falha → corrige." },
+  { f: "O que é Seiri?", v: "Seleção, utilização, arrumação e organização — separar o necessário para a adequada execução do trabalho.", dica: "🗂️ Seiri = SELECIONAR o necessário." },
+  { f: "O que é Seiton?", v: "Ordenação, sistematização e classificação — guardar objetos e informações necessários ao bom desempenho.", dica: "📦 Seiton = SISTEMATIZAR a guarda." },
+  { f: "O que é Seisou?", v: "Limpeza e zelo — lavar, varrer, recolher o lixo e evitar sujar eliminando fontes de sujeira.", dica: "🧹 Seisou = SUJO fora! Limpeza total." },
+  { f: "O que é Seiketsu?", v: "Bem-estar, higiene, asseio, saúde e integridade — cuidar para que informações e comunicações sejam claras.", dica: "💚 Seiketsu = SAÚDE e bem-estar organizacional." },
+  { f: "O que é Shitsuke?", v: "Autodisciplina, educação e compromisso — cumprir procedimentos operacionais, éticos e morais.", dica: "🎯 Shitsuke = SEGUIR os procedimentos sempre." },
+  { f: "Necessidades Fisiológicas (Maslow)", v: "Alimentação, água, sono, conforto físico, roupa, sexo. BASE da pirâmide.", dica: "🍎 Base = sobrevivência. Sem isso, nada mais importa." },
+  { f: "Necessidades de Segurança (Maslow)", v: "Proteção, habitação, estabilidade, assistência.", dica: "🏠 2° nível: ter onde morar e se proteger." },
+  { f: "Necessidades Sociais (Maslow)", v: "Participação, integração, aceitação e afeição.", dica: "👨‍👩‍👧 3° nível: pertencer a grupos e ser aceito." },
+  { f: "Necessidades de Status (Maslow)", v: "Reconhecimento, recompensa, poder, estímulos.", dica: "🏆 4° nível: ser reconhecido e respeitado." },
+  { f: "Autorrealização (Maslow)", v: "Autoconceito, crescimento pessoal interior, sistemas de valores próprios. TOPO da pirâmide.", dica: "⭐ Topo = ser o melhor que se pode ser." },
+  { f: "Fatores Higiênicos (Herzberg)", v: "Salário, segurança, condições ambientais, bem-estar físico, supervisão e aceitação grupal. Quando ausentes, geram insatisfação.", dica: "🚿 Higiênicos = básicos. Sem eles → insatisfação." },
+  { f: "Fatores Motivacionais (Herzberg)", v: "Ascensão funcional, trabalho em si, reconhecimento, responsabilidade, liberdade, desafios profissionais, estímulo à criatividade.", dica: "🚀 Motivacionais = elevam o desempenho quando presentes." },
+  { f: "O que é Brainstorming?", v: "Dinâmica de grupo em que pessoas, de forma organizada e com oportunidades iguais, fazem um grande esforço mental para opinar sobre determinado assunto.", dica: "🧠 Tempestade de ideias: todos opinam, igualdade." },
+  { f: "JUSE — criação e objetivo", v: "Union of Japanese Scientists and Engineers, criada em 1946 para pesquisar e disseminar controle de qualidade, visando a reconstrução do Japão.", dica: "🇯🇵 1946 + Japão + Cientistas = JUSE." },
+  { f: "O que é Processo?", v: "Conjunto de causas ou fatores que agindo entre si promovem a transformação da matéria-prima ou lhe agregam valor, produzindo um resultado ou efeito desejado.", dica: "⚙️ ENTRADA (MP) → PROCESSO → SAÍDA (resultado)." },
+  { f: "Indicadores de Desempenho", v: "Grandezas numéricas que medem atributos de um processo com o objetivo de comparar com metas preestabelecidas. Tipos: Qualidade, Produtividade e Capacidade.", dica: "📊 3 indicadores: Qualidade, Produtividade, Capacidade." },
+  { f: "Programa 5S", v: "Programa de reeducação contra o desperdício. Surgiu no Japão após a 2ª Guerra Mundial. Lançado no Brasil em maio de 1991.", dica: "🗾 Japão → 2ª Guerra → 5 palavras japonesas com S." },
+  { f: "Custo da Qualidade", v: "Expressão usada para indicar dinheiro gasto para prevenir, avaliar e corrigir problemas, desperdícios e falhas de serviços e produtos.", dica: "💰 Prevenir + Avaliar + Corrigir = Custo da Qualidade." },
+  { f: "Programa Netuno", v: "Processo administrativo destinado a aprimorar a gestão das OM e proporcionar à MB melhores condições de prontidão estratégica.", dica: "⚓ NETUNO = gestão naval de excelência." },
+  { f: "O que é Comunicação?", v: "Transmissão de qualquer tipo de informação, por qualquer via ou processo.", dica: "📡 Comunicação = transmitir informação por qualquer meio." },
+  { f: "O que é Equipe?", v: "Grupo de pessoas que trabalham juntos com sinergia, com competências e habilidades que se complementam para atingir um objetivo comum.", dica: "🤝 Equipe ≠ grupo: tem sinergia e objetivo comum." },
+  { f: "Era da Inspeção", v: "Apoia-se em sistema de medidas, utilizando gabaritos, outros acessórios e um padrão de referência.", dica: "📐 Inspeção = gabarito + padrão de referência." },
+  { f: "Era do Controle Estatístico", v: "Estudada na Bell Telephone Laboratories em 1920 para CONTROLAR a qualidade, não apenas verificá-la após o processo.", dica: "📞 Bell 1920: controlar DURANTE, não só depois." },
+  { f: "GQT — Garantia da Qualidade Total", v: "Conjunto de princípios, ferramentas e procedimentos que envolvem TODAS as pessoas da organização. Economiza 10 a 20% do orçamento operacional.", dica: "💲 GQT = todos envolvidos + 10-20% de economia." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — MÚLTIPLA ESCOLHA
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_MULTIPLE_DATA = [
+  {
+    q: "Qual é a definição oficial de Qualidade segundo a ISO?",
+    opts: [
+      "A) Conjunto de princípios que envolvem todas as pessoas de uma organização",
+      "B) Conjunto das propriedades e características de um produto, processo ou serviço que satisfazem necessidades explícitas ou implícitas",
+      "C) Processo de planejamento, controle e aperfeiçoamento contínuo",
+      "D) Sistema de medidas com gabaritos e padrão de referência"
+    ],
+    correct: 1,
+    dica: "💡 ISO: PROPRIEDADES + CARACTERÍSTICAS → satisfazer NECESSIDADES explícitas ou implícitas."
+  },
+  {
+    q: "A Trilogia de Juran é composta pelos seguintes componentes:",
+    opts: [
+      "A) Inspeção, Verificação e Aperfeiçoamento",
+      "B) Planejamento, Execução e Verificação",
+      "C) Planejamento, Controle e Aperfeiçoamento da Qualidade",
+      "D) Controle, Garantia e Gestão Total"
+    ],
+    correct: 2,
+    dica: "💡 PCA: Planejar → Controlar → Aperfeiçoar. Trilogia JURAN."
+  },
+  {
+    q: "O que representa a fase 'A' do Ciclo PDCA?",
+    opts: [
+      "A) Planejar ações preventivas antes do processo",
+      "B) Aplicar e executar o plano definido",
+      "C) Verificar os resultados obtidos no processo",
+      "D) Agir corretivamente sobre desvios ou padronizar métodos"
+    ],
+    correct: 3,
+    dica: "💡 A = ACT = Ação corretiva ou padronização dos métodos bem-sucedidos."
+  },
+  {
+    q: "O Programa 5S surgiu em qual país após a 2ª Guerra Mundial?",
+    opts: [
+      "A) Estados Unidos",
+      "B) Alemanha",
+      "C) Brasil",
+      "D) Japão"
+    ],
+    correct: 3,
+    dica: "💡 Os 5 'S' são palavras JAPONESAS! 日本 — Japão, reconstrução pós-guerra."
+  },
+  {
+    q: "Qual é a necessidade na BASE da pirâmide de Maslow?",
+    opts: [
+      "A) Segurança",
+      "B) Autorrealização",
+      "C) Fisiológicas",
+      "D) Sociais"
+    ],
+    correct: 2,
+    dica: "💡 Base = sobrevivência = FISIOLÓGICAS (comer, beber, dormir...)."
+  },
+  {
+    q: "Segundo Herzberg, salário e condições ambientais são exemplos de:",
+    opts: [
+      "A) Fatores Motivacionais",
+      "B) Fatores de Autorrealização",
+      "C) Fatores de Status",
+      "D) Fatores Higiênicos"
+    ],
+    correct: 3,
+    dica: "💡 HIGIÊNICOS = básicos de manutenção. Sem eles → insatisfação. Com eles → neutro."
+  },
+  {
+    q: "Em que ano foi criada a JUSE no Japão?",
+    opts: [
+      "A) 1920",
+      "B) 1945",
+      "C) 1946",
+      "D) 1991"
+    ],
+    correct: 2,
+    dica: "💡 JUSE = 1946 (1 ano após fim da 2ª Guerra em 1945). Quase mesma data!"
+  },
+  {
+    q: "O Brainstorming é definido como:",
+    opts: [
+      "A) Ferramenta de controle estatístico de processos",
+      "B) Sistema de gabaritos para verificação da qualidade",
+      "C) Dinâmica de grupo onde todos opinam com oportunidades iguais",
+      "D) Programa de reeducação contra o desperdício"
+    ],
+    correct: 2,
+    dica: "💡 Brainstorming = TEMPESTADE de ideias. Todos opinam, oportunidades IGUAIS."
+  },
+  {
+    q: "Quando o programa 5S foi lançado no Brasil?",
+    opts: [
+      "A) Em 1946",
+      "B) Em 1980",
+      "C) Em maio de 1991",
+      "D) Em 2000"
+    ],
+    correct: 2,
+    dica: "💡 Brasil + 5S = MAIO de 1991. Japão foi antes (pós 2ª Guerra)."
+  },
+  {
+    q: "O Programa Netuno tem como objetivo:",
+    opts: [
+      "A) Treinar fuzileiros navais em operações aquáticas especiais",
+      "B) Aprimorar a gestão das Organizações Militares da MB",
+      "C) Controlar despesas com material bélico naval",
+      "D) Avaliar o desempenho físico de praças navais"
+    ],
+    correct: 1,
+    dica: "💡 NETUNO = gestão administrativa das OM para prontidão estratégica da MB."
+  },
+  {
+    q: "A Era do Controle Estatístico da Qualidade foi desenvolvida inicialmente em:",
+    opts: [
+      "A) Bell Telephone Laboratories em 1920",
+      "B) JUSE no Japão em 1946",
+      "C) Harvard Business School em 1930",
+      "D) Departamento de Defesa dos EUA em 1945"
+    ],
+    correct: 0,
+    dica: "💡 Bell 1920 = Controle Estatístico. Controlar DURANTE, não apenas verificar depois."
+  },
+  {
+    q: "Como podem ser classificados os processos?",
+    opts: [
+      "A) Lineares e não lineares",
+      "B) Simples e complexos",
+      "C) Manuais e automatizados",
+      "D) Repetitivos e não repetitivos"
+    ],
+    correct: 3,
+    dica: "💡 Processos = REPETITIVOS e NÃO REPETITIVOS. Simples assim!"
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — CERTO OU ERRADO
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_CE_DATA = [
+  { q: "A fase 'C' do PDCA corresponde a Verificar os resultados do processo.", correto: true, just: "C = Check = VERIFICAR. PDCA: Plan→Do→CHECK→Act." },
+  { q: "O programa 5S surgiu nos Estados Unidos após a Segunda Guerra Mundial.", correto: false, just: "ERRADO! 5S surgiu no JAPÃO, com cinco palavras de origem japonesa." },
+  { q: "Seiri significa limpeza e zelo no programa 5S.", correto: false, just: "ERRADO! SEIRI = Seleção/Organização. SEISOU = limpeza e zelo." },
+  { q: "Os processos podem ser classificados como repetitivos e não repetitivos.", correto: true, just: "Classificação oficial dos processos segundo a teoria de gestão." },
+  { q: "A Era do Controle Estatístico foi estudada na Bell Telephone Laboratories em 1920.", correto: true, just: "Bell 1920: objetivo era CONTROLAR a qualidade, não só verificar após o processo." },
+  { q: "Os fatores motivacionais de Herzberg incluem salário e condições ambientais.", correto: false, just: "ERRADO! Salário e condições ambientais são FATORES HIGIÊNICOS, não motivacionais." },
+  { q: "A JUSE foi criada em 1946 por engenheiros e cientistas japoneses.", correto: true, just: "JUSE = 1946, Japão, para reconstrução nacional via controle de qualidade." },
+  { q: "O custo da qualidade é o dinheiro gasto para prevenir, avaliar e corrigir problemas.", correto: true, just: "Prevenir + Avaliar + Corrigir = definição completa do Custo da Qualidade." },
+  { q: "A hierarquia de Maslow possui 7 níveis de necessidades.", correto: false, just: "ERRADO! Maslow possui 5 níveis: Fisiológicas, Segurança, Sociais, Status e Autorrealização." },
+  { q: "Brainstorming é uma técnica onde apenas um especialista opina sobre determinado assunto.", correto: false, just: "ERRADO! Brainstorming = TODOS opinam com oportunidades IGUAIS. É coletivo!" },
+  { q: "Shitsuke no 5S significa autodisciplina, educação e compromisso.", correto: true, just: "Shitsuke = Seguir procedimentos operacionais, éticos e morais." },
+  { q: "A GQT economiza entre 10 a 20% do orçamento operacional através do custo da qualidade.", correto: true, just: "Garantia da Qualidade Total: 10-20% de economia no orçamento operacional." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — COMPLETE AS LACUNAS
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_LAC_DATA = [
+  { antes: "O ciclo PDCA é composto pelas fases: Planejar, ", depois: ", Verificar e Agir.", resp: "Executar", dica: "D = Do = ?" },
+  { antes: "O programa 5S é um programa de reeducação contra o ", depois: ".", resp: "desperdício", dica: "5S combate o que é desperdiçado." },
+  { antes: "A JUSE foi criada em ", depois: " no Japão por engenheiros e cientistas.", resp: "1946", dica: "1 ano após o fim da 2ª Guerra (1945)." },
+  { antes: "Segundo Maslow, a necessidade de ", depois: " está no TOPO da pirâmide.", resp: "Autorrealização", dica: "O ápice do desenvolvimento humano." },
+  { antes: "O programa 5S foi lançado no Brasil em maio de ", depois: ".", resp: "1991", dica: "Início dos anos 90 no Brasil." },
+  { antes: "O ", depois: " é um conjunto de causas que transforma matéria-prima, produzindo um resultado desejado.", resp: "Processo", dica: "ENTRADA → ??? → SAÍDA." },
+  { antes: "Na Trilogia Juran: Planejamento, ", depois: " e Aperfeiçoamento da Qualidade.", resp: "Controle", dica: "PCA: Planejar, ???, Aperfeiçoar." },
+  { antes: "Os indicadores de desempenho são da Qualidade, da Produtividade e da ", depois: ".", resp: "Capacidade", dica: "Três indicadores: Q, P e C." },
+  { antes: "O Programa ", depois: " é destinado a aprimorar a gestão das OM da MB.", resp: "Netuno", dica: "Deus romano do mar = nome do programa naval." },
+  { antes: "Brainstorming é dinâmica de grupo onde as pessoas têm oportunidades ", depois: " para opinar.", resp: "iguais", dica: "Democracia de ideias: todos têm a mesma chance." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — DEFINIÇÕES
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_DEF_DATA = [
+  { termo: "Qualidade Total", def: "Processo utilizado para garantir o atendimento às necessidades e expectativas dos clientes, sejam eles os acionistas, os funcionários (colaboradores), usuário/consumidores e a sociedade." },
+  { termo: "Processo", def: "Conjunto de causas ou fatores que agindo entre si promovem a transformação da matéria-prima ou lhe agregam valor, produzindo um resultado ou efeito desejado." },
+  { termo: "Custo da Qualidade", def: "Expressão usada para indicar dinheiro gasto para prevenir, avaliar e corrigir problemas, desperdícios e falhas de serviços e produtos." },
+  { termo: "Brainstorming", def: "Dinâmica de grupo em que as pessoas, de forma organizada e com oportunidades iguais, fazem um grande esforço mental para opinar sobre determinado assunto." },
+  { termo: "Equipe", def: "Grupo de pessoas que trabalham juntos com sinergia, com competências e habilidades que se complementam para atingir um objetivo comum." },
+  { termo: "Comunicação", def: "Transmissão de qualquer tipo de informação, por qualquer via ou processo." },
+  { termo: "Programa Netuno", def: "Processo administrativo destinado a aprimorar a gestão das Organizações Militares e proporcionar à Marinha do Brasil as melhores condições para estar pronta e adequada à estatura político-estratégica exigida pelo país." },
+  { termo: "Canal de Comunicação", def: "Meio pelo qual a mensagem é transmitida." },
+  { termo: "Indicadores de Desempenho", def: "Grandezas numéricas que medem atributos de um processo com o objetivo de comparar essas medidas com metas numéricas preestabelecidas." },
+  { termo: "Programa 5S", def: "Programa de reeducação contra o desperdício, surgido no Japão após a 2ª Guerra Mundial e lançado no Brasil em maio de 1991." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — CORRELACIONE
+// ═══════════════════════════════════════════════════════════════
+const CORR_SETS = [
+  {
+    titulo: "5S — Significados",
+    pares: [
+      { termo: "Seiri", def: "Seleção, utilização e organização" },
+      { termo: "Seiton", def: "Ordenação, sistematização e classificação" },
+      { termo: "Seisou", def: "Limpeza e zelo" },
+      { termo: "Seiketsu", def: "Bem-estar, higiene e saúde" },
+      { termo: "Shitsuke", def: "Autodisciplina e compromisso" },
+    ]
+  },
+  {
+    titulo: "Maslow — Níveis da Pirâmide",
+    pares: [
+      { termo: "Fisiológicas", def: "Alimentação, água, sono, conforto físico" },
+      { termo: "Segurança", def: "Proteção, habitação, estabilidade" },
+      { termo: "Sociais", def: "Participação, integração, aceitação e afeição" },
+      { termo: "Status", def: "Reconhecimento, recompensa e poder" },
+      { termo: "Autorrealização", def: "Crescimento pessoal e sistemas de valores próprios" },
+    ]
+  },
+  {
+    titulo: "Eras da Qualidade",
+    pares: [
+      { termo: "Era da Inspeção", def: "Gabaritos, acessórios e padrão de referência" },
+      { termo: "Era do Controle Estatístico", def: "Bell Telephone Laboratories, 1920" },
+      { termo: "Era da Garantia da Qualidade", def: "Economia de 10 a 20% do orçamento operacional" },
+      { termo: "Era da GQT", def: "Princípios, ferramentas e procedimentos para todos" },
+    ]
+  },
+  {
+    titulo: "PDCA — Fases",
+    pares: [
+      { termo: "P — Planejar", def: "Definir metas e métodos para alcançá-las" },
+      { termo: "D — Executar", def: "Implementar o plano definido" },
+      { termo: "C — Verificar", def: "Comparar resultados com as metas planejadas" },
+      { termo: "A — Agir", def: "Padronizar (sucesso) ou corrigir desvios (falha)" },
+    ]
+  },
+  {
+    titulo: "Herzberg — Fatores",
+    pares: [
+      { termo: "Higiênico: Salário", def: "Fator que, se ausente, gera insatisfação" },
+      { termo: "Higiênico: Segurança", def: "Necessidade básica de proteção no trabalho" },
+      { termo: "Motivacional: Ascensão funcional", def: "Crescimento na carreira profissional" },
+      { termo: "Motivacional: Reconhecimento", def: "Valorização do trabalho executado" },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — CITE E LISTE
+// ═══════════════════════════════════════════════════════════════
+const CITE_LISTE_DATA = [
+  {
+    titulo: "Cite as fases do Ciclo PDCA",
+    itens: ["Planejar (Plan)", "Executar (Do)", "Verificar (Check)", "Agir — Ação Corretiva (Act)"],
+    dica: "4 fases. A sigla PDCA ajuda: Plan, Do, Check, Act!"
+  },
+  {
+    titulo: "Cite as Eras da Qualidade em ordem cronológica",
+    itens: ["Era da Inspeção", "Era do Controle Estatístico da Qualidade", "Era da Garantia da Qualidade", "Era da Gestão da Qualidade Total (GQT)"],
+    dica: "ICGG — Inspeção, Controle, Garantia, Gestão."
+  },
+  {
+    titulo: "Cite os 5S com seus significados",
+    itens: ["Seiri — Seleção e organização", "Seiton — Ordenação e classificação", "Seisou — Limpeza e zelo", "Seiketsu — Bem-estar e higiene", "Shitsuke — Autodisciplina e compromisso"],
+    dica: "5 palavras japonesas com a letra S."
+  },
+  {
+    titulo: "Cite os 5 níveis da Pirâmide de Maslow (base ao topo)",
+    itens: ["Fisiológicas", "Segurança", "Sociais", "Status / Estima", "Autorrealização"],
+    dica: "Ordem ascendente: sobrevivência → realização."
+  },
+  {
+    titulo: "Cite os componentes da Trilogia Juran",
+    itens: ["Planejamento da Qualidade", "Controle da Qualidade", "Aperfeiçoamento da Qualidade"],
+    dica: "PCA: Planejar, Controlar, Aperfeiçoar."
+  },
+  {
+    titulo: "Liste os benefícios do Programa 5S",
+    itens: ["Otimização dos espaços", "Minimização dos processos/excessos", "Consciência do desperdício", "Melhor aproveitamento do tempo", "Consciência da importância do controle"],
+    dica: "5 benefícios para um programa 5S!"
+  },
+  {
+    titulo: "Liste os fatores higiênicos de Herzberg",
+    itens: ["Salário", "Segurança", "Condições ambientais", "Bem-estar físico", "Supervisão", "Aceitação grupal"],
+    dica: "Fatores básicos: sem eles há insatisfação."
+  },
+  {
+    titulo: "Liste os fatores motivacionais de Herzberg",
+    itens: ["Ascensão funcional", "Trabalho em si", "Reconhecimento e responsabilidade", "Liberdade e confiança", "Desafios profissionais", "Estímulo à criatividade"],
+    dica: "Fatores que MOTIVAM quando presentes."
+  },
+  {
+    titulo: "Cite os 7 Órgãos de Direção Setorial da Marinha do Brasil",
+    itens: ["ComOpNav — Comando de Operações Navais", "SGM — Secretaria Geral da Marinha", "DGMM — Diretoria Geral do Material da Marinha", "DGPM — Diretoria Geral do Pessoal da Marinha", "DGN — Diretoria Geral de Navegação", "DGDNTM — Diretoria Geral de Desenvolvimento Nuclear e Tecnológico", "CGCFN — Comando Geral do Corpo de Fuzileiros Navais"],
+    dica: "7 órgãos: ComOpNav, SGM, 4 DG's, CGCFN."
+  },
+  {
+    titulo: "Cite um mandamento da GQT (Gestão pela Qualidade Total)",
+    itens: ["Gerência do tempo", "Satisfação do cliente como prioridade", "Melhoria contínua dos processos", "Envolvimento de todas as pessoas", "Decisões baseadas em dados e fatos"],
+    dica: "A GQT possui 10 mandamentos. Gerência do tempo é um deles."
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DADOS — PDF BUSCA (conteúdo textual indexável)
+// ═══════════════════════════════════════════════════════════════
+const PDF_CONTENT = [
+  { titulo: "Qualidade — Definição ISO", texto: "A qualidade é o conjunto das propriedades e características de um produto, processo ou serviço, que lhe fornecem a capacidade de satisfazer as necessidades explícitas ou implícitas.", tags: ["qualidade", "iso", "definição", "propriedades", "necessidades"] },
+  { titulo: "Qualidade Total — Definição", texto: "É o processo utilizado para garantir o atendimento às necessidades e expectativas dos clientes, sejam eles os acionistas, os funcionários (colaboradores), usuário/consumidores e a sociedade.", tags: ["qualidade total", "clientes", "acionistas", "funcionários", "sociedade"] },
+  { titulo: "Trilogia Juran", texto: "Joseph Juran implementou os principais componentes de um processo de qualidade: Planejamento da qualidade, Controle da qualidade e Aperfeiçoamento da qualidade. Conjunto de Obras ligadas por um tema comum.", tags: ["juran", "trilogia", "planejamento", "controle", "aperfeiçoamento"] },
+  { titulo: "Eras da Qualidade", texto: "1ª Era da Inspeção: gabaritos e padrão de referência. 2ª Era do Controle Estatístico: Bell Telephone Laboratories, 1920. 3ª Era da Garantia da Qualidade. 4ª Era da Gestão da Qualidade Total (GQT).", tags: ["eras", "qualidade", "inspeção", "estatístico", "garantia", "gqt", "bell"] },
+  { titulo: "Ciclo PDCA", texto: "Planejar (Plan): definir metas e métodos. Executar (Do): implementar. Verificar (Check): comparar resultados com metas. Agir (Act — fase A): padronizar se atingiu a meta ou atuar corretivamente nos desvios observados.", tags: ["pdca", "planejar", "executar", "verificar", "agir", "ciclo", "meta", "ação corretiva"] },
+  { titulo: "Programa 5S — Origem e Definição", texto: "Programa de reeducação contra o desperdício. Surgiu no Japão após a Segunda Guerra Mundial. Lançado no Brasil em maio de 1991. Benefícios: otimização dos espaços, minimização dos processos, consciência do desperdício, melhor aproveitamento do tempo e consciência do controle.", tags: ["5s", "japão", "1991", "desperdício", "benefícios"] },
+  { titulo: "5S — Seiri", texto: "Seiri: Separar o necessário para a adequada execução do trabalho. Seleção, utilização, arrumação e organização.", tags: ["seiri", "5s", "seleção", "organização"] },
+  { titulo: "5S — Seiton", texto: "Seiton: Guardar objetos e informações que são necessários ao bom desempenho do trabalho. Ordenação, sistematização e classificação.", tags: ["seiton", "5s", "ordenação", "classificação"] },
+  { titulo: "5S — Seisou", texto: "Seisou: Lavar, varrer, recolher o lixo e principalmente evitar sujar, eliminando as fontes de sujeiras. Limpeza e zelo.", tags: ["seisou", "5s", "limpeza", "zelo"] },
+  { titulo: "5S — Seiketsu", texto: "Seiketsu: Cuidar para que as informações e comunicações sejam claras. Bem-estar, higiene, asseio, saúde e integridade.", tags: ["seiketsu", "5s", "saúde", "higiene", "bem-estar"] },
+  { titulo: "5S — Shitsuke", texto: "Shitsuke: Significa cumprir os procedimentos operacionais, éticos e morais. Autodisciplina, educação e compromisso.", tags: ["shitsuke", "5s", "disciplina", "compromisso"] },
+  { titulo: "Maslow — Pirâmide das Necessidades", texto: "Maslow dividiu as necessidades em cinco categorias (ascendente): 1. Fisiológicas (alimentação, água, sono, roupa). 2. Segurança (proteção, habitação, estabilidade). 3. Sociais (participação, aceitação). 4. Status (reconhecimento, recompensa, poder). 5. Autorrealização (crescimento pessoal interior).", tags: ["maslow", "pirâmide", "necessidades", "fisiológicas", "segurança", "sociais", "status", "autorrealização", "motivação"] },
+  { titulo: "Herzberg — Fatores Higiênicos", texto: "Fatores Higiênicos: Salário, segurança, condições ambientais, bem-estar físico, supervisão e aceitação grupal. Satisfazem necessidades que, quando não atendidas, diminuem a produtividade e o interesse do funcionário.", tags: ["herzberg", "higiênicos", "salário", "segurança", "condições", "produtividade"] },
+  { titulo: "Herzberg — Fatores Motivacionais", texto: "Fatores Motivacionais: Ascensão funcional, trabalho em si, reconhecimento e responsabilidade, liberdade e confiança, desafios profissionais, maior responsabilidade e estímulo à criatividade.", tags: ["herzberg", "motivacionais", "ascensão", "reconhecimento", "responsabilidade", "criatividade"] },
+  { titulo: "Brainstorming", texto: "É uma dinâmica de grupo em que as pessoas, de forma organizada e com oportunidades iguais, fazem um grande esforço mental para opinar sobre determinado assunto. Exemplo: CDD avalia exercícios do CIASC com instrutores.", tags: ["brainstorming", "dinâmica", "grupo", "ideias", "opinar", "ciasc", "cdd"] },
+  { titulo: "JUSE — Criação", texto: "Criada em 1946 por engenheiros e cientistas, a JUSE (Union of Japanese Scientists and Engineers), através do grupo de pesquisa do controle de qualidade, pesquisou e disseminou conhecimentos sobre controle de qualidade, com objetivo de participar da reconstrução do Japão.", tags: ["juse", "1946", "japão", "cientistas", "controle", "reconstrução"] },
+  { titulo: "Processo — Definição e Classificação", texto: "Processo: conjunto de causas ou fatores que agindo entre si promovem a transformação da matéria-prima ou lhe agregam valor, produzindo um resultado ou efeito desejado. Classificação: repetitivos e não repetitivos.", tags: ["processo", "matéria-prima", "transformação", "repetitivo", "valor"] },
+  { titulo: "Indicadores de Desempenho", texto: "São grandezas numéricas que medem atributos de um processo ou de seus resultados, com o objetivo de comparar essas medidas com metas numéricas preestabelecidas. Tipos: Indicadores da Qualidade, da Produtividade e da Capacidade.", tags: ["indicadores", "desempenho", "qualidade", "produtividade", "capacidade", "metas"] },
+  { titulo: "Custo da Qualidade", texto: "É a expressão usada para indicar dinheiro gasto para prevenir, avaliar e corrigir problemas, desperdícios e falhas de serviços e produtos. A GQT economiza entre 10 a 20% do orçamento operacional através do custo da qualidade.", tags: ["custo", "qualidade", "prevenir", "avaliar", "corrigir", "orçamento", "10%", "20%"] },
+  { titulo: "GQT — Gestão pela Qualidade Total", texto: "É um conjunto de princípios, ferramentas e procedimentos que envolvem todas as pessoas de uma organização, a fim de atender um cliente com um produto ou serviço com qualidade total. Possui os dez mandamentos, entre eles a Gerência do tempo.", tags: ["gqt", "qualidade total", "princípios", "ferramentas", "mandamentos", "gerência", "tempo"] },
+  { titulo: "Programa Netuno", texto: "É um processo administrativo destinado a aprimorar a gestão das Organizações Militares e, consequentemente, proporcionar à Marinha do Brasil as melhores condições para estar pronta e adequada à estatura político estratégica exigida pelo país.", tags: ["netuno", "mb", "marinha", "gestão", "organizações militares", "prontidão"] },
+  { titulo: "Órgãos de Direção Setorial da MB", texto: "A Marinha do Brasil possui 7 órgãos de Direção Setorial: ComOpNav, SGM (Secretaria Geral), DGMM (Material), DGPM (Pessoal), DGN (Navegação), DGDNTM (Nuclear e Tecnológico) e CGCFN (Corpo de Fuzileiros Navais).", tags: ["mb", "marinha", "órgãos", "comopnav", "sgm", "dgmm", "dgpm", "dgn", "dgdntm", "cgcfn", "fuzileiros"] },
+  { titulo: "Comunicação", texto: "Comunicação: transmissão de qualquer tipo de informação, por qualquer via ou processo. Mensagem: conteúdo ou assunto das informações transmitidas. Canal de comunicação: meio pelo qual a mensagem é transmitida.", tags: ["comunicação", "mensagem", "canal", "informação", "transmissão"] },
+  { titulo: "Equipe", texto: "Equipe: grupo de pessoas que trabalham juntos com sinergia, com competência e habilidades que se complementam para atingir um objetivo comum.", tags: ["equipe", "grupo", "sinergia", "objetivo", "habilidades"] },
+  { titulo: "GESPÚBLICA — Programa Nacional", texto: "Tem por missão promover a gestão pública de excelência, visando contribuir para a qualidade dos serviços públicos prestados ao cidadão e para o aumento da competitividade do País. (Programa Nacional de Gestão Pública e Desburocratização)", tags: ["gespública", "gestão pública", "excelência", "cidadão", "desburocratização", "competitividade"] },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// ESTILOS
+// ═══════════════════════════════════════════════════════════════
+const S = {
+  app: { minHeight: "100vh", background: "#0a0e1a", color: "#e8ecf4", fontFamily: "'Segoe UI', system-ui, sans-serif" },
+  header: { background: "linear-gradient(135deg, #0d1526 0%, #1a2540 100%)", borderBottom: "2px solid #c8a84b", padding: "12px 16px", position: "sticky", top: 0, zIndex: 100 },
+  headerTop: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" },
+  anchor: { fontSize: "24px" },
+  appTitle: { fontSize: "18px", fontWeight: "700", color: "#c8a84b", margin: 0 },
+  appSub: { fontSize: "11px", color: "#7a8ab0", margin: 0 },
+  navScroll: { overflowX: "auto", display: "flex", gap: "6px", paddingBottom: "4px" },
+  navBtn: (active) => ({
+    padding: "7px 14px", borderRadius: "20px", border: "none", cursor: "pointer", whiteSpace: "nowrap",
+    fontSize: "13px", fontWeight: active ? "700" : "400",
+    background: active ? "#c8a84b" : "#1e2c47",
+    color: active ? "#0a0e1a" : "#8a9ab8",
+    transition: "all .2s"
+  }),
+  main: { padding: "16px", maxWidth: "680px", margin: "0 auto" },
+  card: { background: "#111927", border: "1px solid #1e2c47", borderRadius: "12px", padding: "16px", marginBottom: "12px" },
+  cardGold: { background: "#111927", border: "1px solid #c8a84b", borderRadius: "12px", padding: "16px", marginBottom: "12px" },
+  h2: { color: "#c8a84b", fontSize: "18px", fontWeight: "700", margin: "0 0 12px 0" },
+  h3: { color: "#7eb8ff", fontSize: "15px", fontWeight: "600", margin: "0 0 8px 0" },
+  tag: { display: "inline-block", background: "#1e2c47", color: "#7eb8ff", borderRadius: "10px", padding: "3px 10px", fontSize: "12px", marginRight: "6px", marginBottom: "6px" },
+  tagGold: { display: "inline-block", background: "#2a2010", color: "#c8a84b", borderRadius: "10px", padding: "3px 10px", fontSize: "12px", marginRight: "6px", marginBottom: "6px" },
+  btn: { background: "#1e2c47", color: "#e8ecf4", border: "1px solid #2d3e5e", borderRadius: "10px", padding: "12px 16px", width: "100%", textAlign: "left", cursor: "pointer", fontSize: "14px", marginBottom: "8px", transition: "all .15s", display: "block" },
+  btnGold: { background: "#c8a84b", color: "#0a0e1a", border: "none", borderRadius: "10px", padding: "12px 20px", cursor: "pointer", fontSize: "14px", fontWeight: "700", transition: "all .15s" },
+  btnOutline: { background: "transparent", color: "#c8a84b", border: "1px solid #c8a84b", borderRadius: "10px", padding: "10px 20px", cursor: "pointer", fontSize: "14px", fontWeight: "600", transition: "all .15s" },
+  btnCorrect: { background: "#0d3320", color: "#4dff91", border: "1px solid #2d7a4f", borderRadius: "10px", padding: "12px 16px", width: "100%", textAlign: "left", fontSize: "14px", marginBottom: "8px", display: "block" },
+  btnWrong: { background: "#330d0d", color: "#ff6b6b", border: "1px solid #7a2d2d", borderRadius: "10px", padding: "12px 16px", width: "100%", textAlign: "left", fontSize: "14px", marginBottom: "8px", display: "block" },
+  feedbackOk: { background: "#0d3320", border: "1px solid #2d7a4f", borderRadius: "10px", padding: "12px", marginTop: "10px", color: "#4dff91" },
+  feedbackErr: { background: "#330d0d", border: "1px solid #7a2d2d", borderRadius: "10px", padding: "12px", marginTop: "10px", color: "#ff8888" },
+  feedbackWarn: { background: "#2a1a05", border: "1px solid #7a5a10", borderRadius: "10px", padding: "12px", marginTop: "10px", color: "#ffc048" },
+  input: { width: "100%", background: "#1e2c47", border: "1px solid #2d3e5e", borderRadius: "8px", padding: "10px 12px", color: "#e8ecf4", fontSize: "14px", boxSizing: "border-box", outline: "none" },
+  select: { width: "100%", background: "#1e2c47", border: "1px solid #2d3e5e", borderRadius: "8px", padding: "8px 10px", color: "#e8ecf4", fontSize: "13px", marginBottom: "8px" },
+  progress: (pct) => ({ height: "6px", background: "#1e2c47", borderRadius: "3px", marginBottom: "16px", overflow: "hidden" }),
+  progressFill: (pct) => ({ height: "100%", width: pct + "%", background: "linear-gradient(90deg, #c8a84b, #f0d060)", borderRadius: "3px", transition: "width .3s" }),
+  divider: { height: "1px", background: "#1e2c47", margin: "12px 0" },
+  row: { display: "flex", gap: "8px", flexWrap: "wrap" },
+  score: { textAlign: "center", padding: "20px" },
+  scoreNum: { fontSize: "48px", fontWeight: "900", color: "#c8a84b" },
+  dica: { background: "#0d1526", border: "1px solid #1e2c47", borderRadius: "8px", padding: "10px 12px", marginTop: "10px", fontSize: "13px", color: "#8a9ab8" },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Tela Inicial
+// ═══════════════════════════════════════════════════════════════
+function HomeScreen({ setScreen }) {
+  const menuItems = [
+    { id: "super-resumo", icon: "⚡", label: "Super Resumo", desc: "Tópicos essenciais para revisão rápida" },
+    { id: "resumo-completo", icon: "📖", label: "Resumo Completo", desc: "Conteúdo detalhado por blocos temáticos" },
+    { id: "mapa-mental", icon: "🧠", label: "Mapa Mental", desc: "Visão geral expandível dos temas" },
+    { id: "flashcards", icon: "🃏", label: "Flashcards", desc: "30 cartões frente/verso com dicas" },
+    { id: "pdf-busca", icon: "🔍", label: "Busca no Conteúdo", desc: "Pesquise qualquer palavra ou tema" },
+    { id: "quiz-multiple", icon: "🎯", label: "Múltipla Escolha", desc: "12 questões com 4 alternativas" },
+    { id: "quiz-ce", icon: "✅", label: "Certo ou Errado", desc: "12 afirmações com justificativa" },
+    { id: "quiz-lacunas", icon: "📝", label: "Complete as Lacunas", desc: "10 frases para completar" },
+    { id: "quiz-definicoes", icon: "📚", label: "Definições", desc: "10 termos para definir com suas palavras" },
+    { id: "quiz-correlacione", icon: "🔗", label: "Correlacione", desc: "5 conjuntos para associar termos" },
+    { id: "quiz-cite-liste", icon: "📋", label: "Cite e Liste", desc: "10 questões dissertativas guiadas" },
+  ];
+  return (
+    <div>
+      <div style={{ ...S.cardGold, textAlign: "center", padding: "20px" }}>
+        <div style={{ fontSize: "40px", marginBottom: "8px" }}>⚓</div>
+        <div style={{ ...S.h2, textAlign: "center" }}>Gestão 2026</div>
+        <div style={{ color: "#7a8ab0", fontSize: "14px" }}>{FLASHCARDS.length} flashcards · {QUIZ_MULTIPLE_DATA.length + QUIZ_CE_DATA.length + QUIZ_LAC_DATA.length + QUIZ_DEF_DATA.length} questões · 5 conjuntos de correlação</div>
+      </div>
+      {menuItems.map((item) => (
+        <button key={item.id} style={S.btn} onClick={() => setScreen(item.id)}>
+          <span style={{ fontSize: "18px", marginRight: "10px" }}>{item.icon}</span>
+          <strong>{item.label}</strong>
+          <div style={{ color: "#6a7a98", fontSize: "12px", marginTop: "3px" }}>{item.desc}</div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Super Resumo
+// ═══════════════════════════════════════════════════════════════
+function SuperResumoScreen({ setScreen }) {
+  const topicos = [
+    { icon: "📐", titulo: "Qualidade — ISO", pontos: ["Conjunto de propriedades e características que satisfazem necessidades explícitas ou implícitas", "Qualidade Total: atende acionistas, funcionários, usuários e sociedade"] },
+    { icon: "🔺", titulo: "Trilogia Juran (PCA)", pontos: ["Planejamento da Qualidade", "Controle da Qualidade", "Aperfeiçoamento da Qualidade"] },
+    { icon: "🕰️", titulo: "4 Eras da Qualidade", pontos: ["1ª Inspeção: gabaritos e padrão de referência", "2ª Controle Estatístico: Bell 1920 — controlar durante o processo", "3ª Garantia: custo da qualidade, 10-20% economia", "4ª GQT: todos os colaboradores envolvidos"] },
+    { icon: "🔄", titulo: "Ciclo PDCA", pontos: ["P — Planejar: metas e métodos", "D — Executar: implementar o plano", "C — Verificar: comparar com a meta", "A — Agir: padronizar (sucesso) OU corrigir (falha)"] },
+    { icon: "🗾", titulo: "Programa 5S — Japão", pontos: ["Seiri: Seleção/Organização", "Seiton: Ordenação/Classificação", "Seisou: Limpeza e zelo", "Seiketsu: Saúde e bem-estar", "Shitsuke: Disciplina e compromisso", "Brasil: lançado em maio/1991"] },
+    { icon: "🏔️", titulo: "Maslow (base → topo)", pontos: ["1 Fisiológicas: alimentação, água, sono", "2 Segurança: proteção, habitação", "3 Sociais: participação, aceitação", "4 Status: reconhecimento, poder", "5 Autorrealização: crescimento interior"] },
+    { icon: "⚖️", titulo: "Herzberg", pontos: ["Higiênicos: salário, segurança, condições ambientais → ausência gera insatisfação", "Motivacionais: ascensão, reconhecimento, desafios, criatividade → presença motiva"] },
+    { icon: "🧠", titulo: "Brainstorming", pontos: ["Dinâmica de grupo organizada", "Todos com oportunidades IGUAIS para opinar", "Grande esforço mental coletivo"] },
+    { icon: "🇯🇵", titulo: "JUSE — 1946", pontos: ["Union of Japanese Scientists and Engineers", "Pesquisou e disseminou controle de qualidade", "Objetivo: reconstrução do Japão pós-guerra"] },
+    { icon: "⚙️", titulo: "Processo", pontos: ["Transforma matéria-prima ou agrega valor", "Classifica-se em: repetitivos e não repetitivos", "Indicadores: Qualidade, Produtividade, Capacidade"] },
+    { icon: "⚓", titulo: "Programa Netuno (MB)", pontos: ["Aprimora gestão das Organizações Militares", "Objetivo: prontidão estratégica da MB", "7 Órgãos Setoriais: ComOpNav, SGM, DGMM, DGPM, DGN, DGDNTM, CGCFN"] },
+  ];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>⚡ Super Resumo</h2>
+      </div>
+      {topicos.map((t, i) => (
+        <div key={i} style={S.card}>
+          <div style={S.h3}>{t.icon} {t.titulo}</div>
+          {t.pontos.map((p, j) => (
+            <div key={j} style={{ display: "flex", gap: "8px", marginBottom: "6px", fontSize: "14px" }}>
+              <span style={{ color: "#c8a84b", flexShrink: 0 }}>▸</span>
+              <span>{p}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Resumo Completo
+// ═══════════════════════════════════════════════════════════════
+function ResumoCompletoScreen({ setScreen }) {
+  const [aberto, setAberto] = useState(null);
+  const blocos = [
+    {
+      titulo: "🎓 Qualidade — Fundamentos", sub: "ISO · GQT · Juran",
+      conteudo: `DEFINIÇÃO ISO: "A qualidade é o conjunto das propriedades e características de um produto, processo ou serviço, que lhe fornecem a capacidade de satisfazer as necessidades explícitas ou implícitas."\n\nQUALIDADE TOTAL: Processo para garantir atendimento às necessidades e expectativas dos clientes: acionistas, funcionários (colaboradores), usuários/consumidores e a sociedade.\n\nGQT — GESTÃO PELA QUALIDADE TOTAL: Conjunto de princípios, ferramentas e procedimentos que envolvem TODAS as pessoas de uma organização. Possui os "Dez Mandamentos", sendo um deles a Gerência do Tempo.\n\nGQT economiza 10 a 20% do orçamento operacional via custo da qualidade.`
+    },
+    {
+      titulo: "🔺 Trilogia Juran", sub: "Planejamento · Controle · Aperfeiçoamento",
+      conteudo: `Joseph Juran definiu os principais componentes de um processo de qualidade como um Conjunto de Obras ligadas entre si por um tema comum, denominado TRILOGIA JURAN:\n\n1. PLANEJAMENTO DA QUALIDADE: Identificar clientes, suas necessidades e desenvolver produtos/serviços que as atendam.\n\n2. CONTROLE DA QUALIDADE: Avaliar o desempenho atual e comparar com as metas estabelecidas, atuando nos desvios.\n\n3. APERFEIÇOAMENTO DA QUALIDADE: Estabelecer infraestrutura necessária para alcançar melhorias anuais na qualidade.`
+    },
+    {
+      titulo: "🕰️ Eras da Qualidade", sub: "4 eras históricas",
+      conteudo: `1ª ERA DA INSPEÇÃO: Apoia-se em sistema de medidas, utilizando gabaritos, outros acessórios e um padrão de referência. Verificação após o processo.\n\n2ª ERA DO CONTROLE ESTATÍSTICO: Estudado e utilizado inicialmente na Bell Telephone Laboratories em 1920. Objetivo: CONTROLAR a qualidade durante o processo, não apenas verificá-la depois.\n\n3ª ERA DA GARANTIA DA QUALIDADE: Foca em prevenção e no custo da qualidade. GQT economiza 10 a 20% do orçamento operacional.\n\n4ª ERA DA GESTÃO DA QUALIDADE TOTAL (GQT): Envolve TODOS os colaboradores. Princípios, ferramentas e procedimentos integrados.`
+    },
+    {
+      titulo: "🔄 Ciclo PDCA", sub: "4 fases do ciclo de melhoria",
+      conteudo: `P — PLANEJAR (Plan): Estabelecer metas e os métodos para alcançá-las. Identificar o problema e analisar as causas.\n\nD — EXECUTAR (Do): Treinar e implementar o plano definido. Colocar em prática.\n\nC — VERIFICAR (Check): Verificar os efeitos das ações. Comparar resultados obtidos com as metas planejadas.\n\nA — AGIR, AÇÃO CORRETIVA (Act): Existem duas possibilidades:\n• Meta ATINGIDA → padronizar os métodos (garantir repetição do resultado positivo).\n• Meta NÃO ATINGIDA → atuar corretivamente nos desvios observados, recomeçando o ciclo.`
+    },
+    {
+      titulo: "🗾 Programa 5S", sub: "Origem · Significados · Benefícios",
+      conteudo: `ORIGEM: Surgiu no Japão após a Segunda Guerra Mundial como programa de reeducação contra o desperdício. Lançado no Brasil em MAIO DE 1991.\n\nJUSE (1946): Union of Japanese Scientists and Engineers — pesquisou e disseminou o controle de qualidade para reconstrução do Japão.\n\nSEIRI: Seleção, utilização, arrumação e organização. Separar o necessário para adequada execução do trabalho.\nSEITON: Ordenação, sistematização e classificação. Guardar objetos necessários ao bom desempenho.\nSEISOU: Limpeza e zelo. Lavar, varrer, recolher lixo e evitar sujar eliminando fontes de sujeira.\nSEIKETSU: Bem-estar, higiene, asseio, saúde e integridade. Informações e comunicações claras.\nSHITSUKE: Autodisciplina, educação e compromisso. Cumprir procedimentos operacionais, éticos e morais.\n\nBENEFÍCIOS: Otimização dos espaços | Minimização dos processos | Consciência do desperdício | Melhor aproveitamento do tempo | Consciência da importância do controle.`
+    },
+    {
+      titulo: "🏔️ Maslow — Pirâmide das Necessidades", sub: "5 níveis em sentido ascendente",
+      conteudo: `Maslow demonstrou a mobilidade da motivação humana em busca de satisfação, dividida em 5 categorias (base ao topo):\n\n1. FISIOLÓGICAS: Alimentação, água, sono, conforto físico, roupa, sexo.\n2. SEGURANÇA: Proteção, habitação, estabilidade, assistência.\n3. SOCIAIS: Participação, integração, aceitação e afeição.\n4. STATUS/ESTIMA: Reconhecimento, recompensa, poder, estímulos.\n5. AUTORREALIZAÇÃO: Autoconceito, crescimento pessoal interior, sistemas de valores próprios.`
+    },
+    {
+      titulo: "⚖️ Herzberg — Teoria dos Dois Fatores", sub: "Higiênicos vs Motivacionais",
+      conteudo: `FATORES HIGIÊNICOS (ausência → insatisfação):\nSalário, segurança, condições ambientais, bem-estar físico, supervisão e aceitação grupal.\n"Satisfazem necessidades que quando não atendidas diminuem a produtividade e o interesse do funcionário, acarretando prejuízo à organização."\n\nFATORES MOTIVACIONAIS (presença → motivação):\nAscensão funcional, trabalho em si, reconhecimento e responsabilidade, liberdade e confiança, desafios profissionais, maior responsabilidade e estímulo à criatividade.\n\n⚠️ PEGADINHA: Salário NÃO motiva, apenas previne insatisfação!`
+    },
+    {
+      titulo: "🧠 Brainstorming e Ferramentas", sub: "Técnicas de gestão da qualidade",
+      conteudo: `BRAINSTORMING: Dinâmica de grupo em que as pessoas, de forma organizada e com oportunidades IGUAIS, fazem um grande esforço mental para opinar sobre determinado assunto.\n\nExemplo prático (CIASC/CDD): O CDD avalia exercícios do CIASC. Militares usam Folhas de Verificação → dados são Estratificados → monta-se Gráfico de Pareto → realiza-se Brainstorming com instrutores.\n\nFERRAMENTAS DA QUALIDADE CITADAS:\n• Folha de Verificação: coleta estruturada de dados\n• Estratificação: análise por categorias\n• Gráfico de Pareto: priorização de problemas (80/20)\n• Brainstorming: geração coletiva de soluções`
+    },
+    {
+      titulo: "⚙️ Processo e Indicadores", sub: "Definição · Classificação · Métricas",
+      conteudo: `PROCESSO: Conjunto de causas ou fatores que agindo entre si promovem a transformação da matéria-prima ou lhe agregam valor, produzindo um resultado ou efeito desejado.\n\nCLASSIFICAÇÃO: Repetitivos e não repetitivos.\n\nINDICADORES DE DESEMPENHO: Grandezas numéricas que medem atributos de um processo com o objetivo de comparar com metas numéricas preestabelecidas.\n\nTIPOS:\n• Indicadores da Qualidade\n• Indicadores da Produtividade\n• Indicadores da Capacidade\n\nCUSTO DA QUALIDADE: Dinheiro gasto para prevenir, avaliar e corrigir problemas, desperdícios e falhas.`
+    },
+    {
+      titulo: "⚓ Marinha do Brasil — Gestão", sub: "Netuno · Órgãos Setoriais",
+      conteudo: `PROGRAMA NETUNO: Processo administrativo destinado a aprimorar a gestão das Organizações Militares e proporcionar à Marinha do Brasil as melhores condições para estar pronta e adequada à estatura político-estratégica exigida pelo país.\n\n7 ÓRGÃOS DE DIREÇÃO SETORIAL:\n1. ComOpNav — Comando de Operações Navais\n2. SGM — Secretaria Geral da Marinha\n3. DGMM — Diretoria Geral do Material da Marinha\n4. DGPM — Diretoria Geral do Pessoal da Marinha\n5. DGN — Diretoria Geral de Navegação\n6. DGDNTM — Diretoria Geral de Desenvolvimento Nuclear e Tecnológico da Marinha\n7. CGCFN — Comando Geral do Corpo de Fuzileiros Navais\n\nGESPÚBLICA: Missão de promover gestão pública de excelência, contribuindo para qualidade dos serviços ao cidadão e competitividade do País.`
+    },
+    {
+      titulo: "📡 Comunicação e Equipe", sub: "Conceitos básicos",
+      conteudo: `COMUNICAÇÃO: Transmissão de qualquer tipo de informação, por qualquer via ou processo.\n\nMENSAGEM: Conteúdo ou assunto das informações que são transmitidas.\n\nCANAL DE COMUNICAÇÃO: Meio pelo qual a mensagem é transmitida.\n\nEQUIPE: Grupo de pessoas que trabalham juntos com sinergia, com competência e habilidades que se complementam para atingir um objetivo comum.\n\n⚠️ Diferença: Grupo ≠ Equipe. Equipe tem sinergia + habilidades complementares + objetivo comum.`
+    },
+  ];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>📖 Resumo Completo</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "12px" }}>Toque nos blocos para expandir o conteúdo completo.</div>
+      {blocos.map((b, i) => (
+        <div key={i} style={{ ...S.card, cursor: "pointer" }} onClick={() => setAberto(aberto === i ? null : i)}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: "700", color: "#e8ecf4", marginBottom: "2px" }}>{b.titulo}</div>
+              <div style={{ fontSize: "12px", color: "#6a7a98" }}>{b.sub}</div>
+            </div>
+            <span style={{ color: "#c8a84b", fontSize: "20px" }}>{aberto === i ? "▴" : "▾"}</span>
+          </div>
+          <div style={{ display: aberto === i ? "block" : "none", marginTop: "12px", fontSize: "14px", lineHeight: "1.7", color: "#c8d4e8", whiteSpace: "pre-wrap" }}>
+            {b.conteudo}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Mapa Mental
+// ═══════════════════════════════════════════════════════════════
+function MapaMentalScreen({ setScreen }) {
+  const [abertos, setAbertos] = useState({});
+  const toggle = (k) => setAbertos(a => ({ ...a, [k]: !a[k] }));
+  const nos = [
+    {
+      id: "qualidade", cor: "#c8a84b", icon: "⭐", label: "QUALIDADE",
+      filhos: [
+        { label: "ISO: propriedades + características → necessidades" },
+        { label: "Total: acionistas, funcionários, usuários, sociedade" },
+        { label: "GQT: todos envolvidos + 10 mandamentos" },
+        { label: "Custo: prevenir + avaliar + corrigir" },
+      ]
+    },
+    {
+      id: "juran", cor: "#7eb8ff", icon: "🔺", label: "TRILOGIA JURAN",
+      filhos: [
+        { label: "Planejamento da Qualidade" },
+        { label: "Controle da Qualidade" },
+        { label: "Aperfeiçoamento da Qualidade" },
+      ]
+    },
+    {
+      id: "eras", cor: "#ff9f7e", icon: "🕰️", label: "ERAS DA QUALIDADE",
+      filhos: [
+        { label: "1ª Inspeção: gabaritos + padrão" },
+        { label: "2ª Controle Estatístico: Bell 1920" },
+        { label: "3ª Garantia: custo da qualidade" },
+        { label: "4ª GQT: todos os colaboradores" },
+      ]
+    },
+    {
+      id: "pdca", cor: "#7eff9f", icon: "🔄", label: "CICLO PDCA",
+      filhos: [
+        { label: "P: Planejar — metas e métodos" },
+        { label: "D: Executar — implementar" },
+        { label: "C: Verificar — comparar resultados" },
+        { label: "A: Agir — padronizar ou corrigir" },
+      ]
+    },
+    {
+      id: "5s", cor: "#ff7eb8", icon: "🗾", label: "PROGRAMA 5S",
+      filhos: [
+        { label: "Seiri: Seleção e organização" },
+        { label: "Seiton: Ordenação e classificação" },
+        { label: "Seisou: Limpeza e zelo" },
+        { label: "Seiketsu: Saúde e bem-estar" },
+        { label: "Shitsuke: Disciplina e compromisso" },
+        { label: "Origem: Japão | Brasil: mai/1991" },
+      ]
+    },
+    {
+      id: "maslow", cor: "#b87eff", icon: "🏔️", label: "MASLOW",
+      filhos: [
+        { label: "1 Fisiológicas (BASE)" },
+        { label: "2 Segurança" },
+        { label: "3 Sociais" },
+        { label: "4 Status / Estima" },
+        { label: "5 Autorrealização (TOPO)" },
+      ]
+    },
+    {
+      id: "herzberg", cor: "#7effed", icon: "⚖️", label: "HERZBERG",
+      filhos: [
+        { label: "Higiênicos: salário, segurança, condições (ausência → insatisfação)" },
+        { label: "Motivacionais: ascensão, reconhecimento, desafios (presença → motivação)" },
+      ]
+    },
+    {
+      id: "mb", cor: "#c8a84b", icon: "⚓", label: "MARINHA — GESTÃO",
+      filhos: [
+        { label: "Netuno: gestão das OM → prontidão estratégica" },
+        { label: "7 Órgãos Setoriais: ComOpNav, SGM, DGMM, DGPM, DGN, DGDNTM, CGCFN" },
+        { label: "GESPÚBLICA: gestão pública de excelência" },
+      ]
+    },
+  ];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>🧠 Mapa Mental</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "12px" }}>Toque nos nós para expandir.</div>
+      <div style={{ ...S.card, background: "#0d1526", textAlign: "center", padding: "14px", marginBottom: "16px" }}>
+        <div style={{ fontSize: "24px" }}>📊</div>
+        <div style={{ color: "#c8a84b", fontWeight: "700", fontSize: "16px" }}>GESTÃO 2026</div>
+        <div style={{ color: "#6a7a98", fontSize: "12px" }}>Centro do Mapa Mental</div>
+      </div>
+      {nos.map((no) => (
+        <div key={no.id} style={{ marginBottom: "8px" }}>
+          <button
+            onClick={() => toggle(no.id)}
+            style={{ ...S.btn, borderLeft: `4px solid ${no.cor}`, display: "flex", alignItems: "center", gap: "8px" }}
+          >
+            <span style={{ fontSize: "18px" }}>{no.icon}</span>
+            <span style={{ fontWeight: "700", color: no.cor }}>{no.label}</span>
+            <span style={{ marginLeft: "auto", color: "#6a7a98" }}>{abertos[no.id] ? "▴" : "▾"}</span>
+          </button>
+          <div style={{ display: abertos[no.id] ? "block" : "none", marginLeft: "20px" }}>
+            {no.filhos.map((f, j) => (
+              <div key={j} style={{ display: "flex", gap: "8px", padding: "8px 10px", borderLeft: `2px solid ${no.cor}44`, marginBottom: "4px", fontSize: "13px", color: "#c8d4e8" }}>
+                <span style={{ color: no.cor, flexShrink: 0 }}>◆</span>
+                <span>{f.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Flashcards
+// ═══════════════════════════════════════════════════════════════
+function FlashcardsScreen({ setScreen }) {
+  const [idx, setIdx] = useState(0);
+  const [virado, setVirado] = useState(false);
+  const [dica, setDica] = useState(false);
+  const card = FLASHCARDS[idx];
+  function proximo() { setIdx(i => (i + 1) % FLASHCARDS.length); setVirado(false); setDica(false); }
+  function anterior() { setIdx(i => (i - 1 + FLASHCARDS.length) % FLASHCARDS.length); setVirado(false); setDica(false); }
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>🃏 Flashcards</h2>
+      </div>
+      <div style={{ textAlign: "center", marginBottom: "8px", color: "#6a7a98", fontSize: "13px" }}>
+        Cartão {idx + 1} de {FLASHCARDS.length}
+      </div>
+      <div style={S.progress(((idx + 1) / FLASHCARDS.length) * 100)}>
+        <div style={S.progressFill(((idx + 1) / FLASHCARDS.length) * 100)} />
+      </div>
+      <div
+        style={{ ...S.cardGold, minHeight: "180px", cursor: "pointer", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}
+        onClick={() => setVirado(v => !v)}
+      >
+        <div style={{ fontSize: "11px", color: "#6a7a98", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>
+          {virado ? "↩ Verso — Resposta" : "Toque para virar → Verso"}
+        </div>
+        <div style={{ fontSize: virado ? "13px" : "16px", fontWeight: virado ? "400" : "700", color: virado ? "#c8d4e8" : "#e8ecf4", lineHeight: "1.6" }}>
+          {virado ? card.v : card.f}
+        </div>
+      </div>
+      <div style={{ display: dica ? "block" : "none" }}>
+        <div style={S.dica}>💡 {card.dica}</div>
+      </div>
+      <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+        <button style={{ ...S.btnOutline, flex: 1 }} onClick={anterior}>‹ Anterior</button>
+        <button style={{ background: "#1e2c47", color: "#c8a84b", border: "1px solid #2d3e5e", borderRadius: "10px", padding: "10px", cursor: "pointer", flex: 1 }} onClick={() => setDica(d => !d)}>
+          {dica ? "Ocultar Dica" : "💡 Ver Dica"}
+        </button>
+        <button style={{ ...S.btnGold, flex: 1 }} onClick={proximo}>Próximo ›</button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: PDF Busca
+// ═══════════════════════════════════════════════════════════════
+function PdfBuscaScreen({ setScreen }) {
+  const [busca, setBusca] = useState("");
+  const resultados = busca.length > 1
+    ? PDF_CONTENT.filter(item =>
+        item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
+        item.texto.toLowerCase().includes(busca.toLowerCase()) ||
+        item.tags.some(t => t.includes(busca.toLowerCase()))
+      )
+    : [];
+  function highlight(texto, termo) {
+    if (!termo) return texto;
+    const regex = new RegExp(`(${termo})`, "gi");
+    const partes = texto.split(regex);
+    return partes.map((p, i) =>
+      p.toLowerCase() === termo.toLowerCase()
+        ? <span key={i} style={{ background: "#c8a84b33", color: "#f0d060", borderRadius: "3px", padding: "0 2px" }}>{p}</span>
+        : p
+    );
+  }
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>🔍 Busca</h2>
+      </div>
+      <input
+        style={{ ...S.input, marginBottom: "12px", fontSize: "16px" }}
+        placeholder="🔍 Pesquise: pdca, maslow, 5s, juran, netuno..."
+        value={busca}
+        onChange={e => setBusca(e.target.value)}
+      />
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "12px" }}>
+        {busca.length > 1 ? `${resultados.length} resultado(s) para "${busca}"` : `${PDF_CONTENT.length} tópicos indexados`}
+      </div>
+      {busca.length <= 1 && PDF_CONTENT.map((item, i) => (
+        <div key={i} style={S.card}>
+          <div style={{ fontWeight: "700", color: "#e8ecf4", marginBottom: "6px" }}>{item.titulo}</div>
+          <div style={{ display: "flex", flexWrap: "wrap" }}>
+            {item.tags.map((t, j) => <span key={j} style={S.tag}>{t}</span>)}
+          </div>
+        </div>
+      ))}
+      {busca.length > 1 && resultados.length === 0 && (
+        <div style={S.feedbackWarn}>Nenhum resultado encontrado. Tente: pdca, juran, 5s, maslow, herzberg, netuno...</div>
+      )}
+      {resultados.map((item, i) => (
+        <div key={i} style={S.cardGold}>
+          <div style={{ fontWeight: "700", color: "#c8a84b", marginBottom: "8px" }}>{item.titulo}</div>
+          <div style={{ fontSize: "14px", lineHeight: "1.6", color: "#c8d4e8" }}>{highlight(item.texto, busca)}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", marginTop: "8px" }}>
+            {item.tags.map((t, j) => <span key={j} style={S.tag}>{t}</span>)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Quiz Múltipla Escolha
+// ═══════════════════════════════════════════════════════════════
+function QuizMultiple({ setScreen }) {
+  const [tick, setTick] = useState(0);
+  const [feedbackShow, setFeedbackShow] = useState(false);
+  const [acertou, setAcertou] = useState(false);
+  const [selecionado, setSelecionado] = useState(-1);
+
+  if (!_mq) {
+    _mq = [...QUIZ_MULTIPLE_DATA].sort(() => Math.random() - 0.5);
+    _mqIdx = 0;
+    _mqAnswered = false;
+    _mqScore = 0;
+  }
+
+  function reiniciar() {
+    _mq = [...QUIZ_MULTIPLE_DATA].sort(() => Math.random() - 0.5);
+    _mqIdx = 0;
+    _mqAnswered = false;
+    _mqScore = 0;
+    setFeedbackShow(false);
+    setSelecionado(-1);
+    setTick(t => t + 1);
+  }
+
+  function responder(idx) {
+    if (_mqAnswered) return;
+    _mqAnswered = true;
+    const ok = idx === _mq[_mqIdx].correct;
+    if (ok) _mqScore++;
+    setSelecionado(idx);
+    setAcertou(ok);
+    setFeedbackShow(true);
+  }
+
+  function proximo() {
+    _mqIdx++;
+    _mqAnswered = false;
+    setFeedbackShow(false);
+    setSelecionado(-1);
+    setTick(t => t + 1);
+  }
+
+  if (_mqIdx >= (_mq ? _mq.length : QUIZ_MULTIPLE_DATA.length)) {
+    const pct = Math.round((_mqScore / QUIZ_MULTIPLE_DATA.length) * 100);
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>🎯 Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{_mqScore}/{QUIZ_MULTIPLE_DATA.length}</div>
+          <div style={{ fontSize: "20px", color: pct >= 70 ? "#4dff91" : pct >= 50 ? "#ffc048" : "#ff6b6b", marginTop: "8px" }}>
+            {pct >= 80 ? "🏆 Excelente!" : pct >= 60 ? "👍 Bom desempenho!" : pct >= 40 ? "📚 Precisa revisar" : "❌ Estude mais!"}
+          </div>
+          <div style={{ fontSize: "36px", marginTop: "8px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = _mq[_mqIdx];
+  const estilo = (i) => {
+    if (!feedbackShow) return S.btn;
+    if (i === q.correct) return S.btnCorrect;
+    if (i === selecionado) return S.btnWrong;
+    return { ...S.btn, opacity: 0.5 };
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>🎯 Múltipla Escolha</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Questão {_mqIdx + 1}/{_mq.length} · Acertos: {_mqScore}
+      </div>
+      <div style={S.progress(((_mqIdx) / _mq.length) * 100)}>
+        <div style={S.progressFill(((_mqIdx) / _mq.length) * 100)} />
+      </div>
+      <div style={{ ...S.card, fontSize: "16px", fontWeight: "600", lineHeight: "1.5", marginBottom: "16px" }}>
+        {q.q}
+      </div>
+      <button style={estilo(0)} onClick={() => responder(0)}>{q.opts[0]}</button>
+      <button style={estilo(1)} onClick={() => responder(1)}>{q.opts[1]}</button>
+      <button style={estilo(2)} onClick={() => responder(2)}>{q.opts[2]}</button>
+      <button style={estilo(3)} onClick={() => responder(3)}>{q.opts[3]}</button>
+      <div style={{ display: feedbackShow ? "block" : "none" }}>
+        <div style={acertou ? S.feedbackOk : S.feedbackErr}>
+          {acertou ? "✅ Correto!" : `❌ Errado! Correto: ${q.opts[q.correct]}`}
+        </div>
+        <div style={S.dica}>💡 {q.dica}</div>
+        <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+          {_mqIdx + 1 < _mq.length ? "Próxima →" : "Ver Resultado"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Certo ou Errado
+// ═══════════════════════════════════════════════════════════════
+function QuizCertoErrado({ setScreen }) {
+  const [idx, setIdx] = useState(0);
+  const [respondido, setRespondido] = useState(false);
+  const [acertou, setAcertou] = useState(false);
+  const [score, setScore] = useState(0);
+  const [showJust, setShowJust] = useState(false);
+  const [ordem] = useState(() => [...QUIZ_CE_DATA].sort(() => Math.random() - 0.5));
+
+  function responder(resp) {
+    if (respondido) return;
+    const ok = resp === ordem[idx].correto;
+    if (ok) setScore(s => s + 1);
+    setAcertou(ok);
+    setRespondido(true);
+  }
+
+  function proximo() {
+    setIdx(i => i + 1);
+    setRespondido(false);
+    setShowJust(false);
+  }
+
+  function reiniciar() {
+    setIdx(0);
+    setRespondido(false);
+    setScore(0);
+    setShowJust(false);
+  }
+
+  if (idx >= ordem.length) {
+    const pct = Math.round((score / ordem.length) * 100);
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>✅ Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{score}/{ordem.length}</div>
+          <div style={{ fontSize: "20px", color: pct >= 70 ? "#4dff91" : "#ffc048", marginTop: "8px" }}>
+            {pct >= 80 ? "🏆 Ótimo!" : pct >= 60 ? "👍 Bom!" : "📚 Revise!"}
+          </div>
+          <div style={{ fontSize: "36px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = ordem[idx];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>✅ Certo ou Errado</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Afirmação {idx + 1}/{ordem.length} · Acertos: {score}
+      </div>
+      <div style={S.progress((idx / ordem.length) * 100)}>
+        <div style={S.progressFill((idx / ordem.length) * 100)} />
+      </div>
+      <div style={{ ...S.card, fontSize: "15px", fontWeight: "600", lineHeight: "1.6", marginBottom: "16px" }}>
+        "{q.q}"
+      </div>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+        <button
+          style={{ flex: 1, background: respondido && q.correto ? "#0d3320" : "#1e2c47", color: respondido && q.correto ? "#4dff91" : "#e8ecf4", border: respondido && q.correto ? "2px solid #2d7a4f" : "1px solid #2d3e5e", borderRadius: "10px", padding: "14px", cursor: "pointer", fontSize: "16px", fontWeight: "700" }}
+          onClick={() => responder(true)}
+        >✅ CERTO</button>
+        <button
+          style={{ flex: 1, background: respondido && !q.correto ? "#0d3320" : "#1e2c47", color: respondido && !q.correto ? "#4dff91" : "#e8ecf4", border: respondido && !q.correto ? "2px solid #2d7a4f" : "1px solid #2d3e5e", borderRadius: "10px", padding: "14px", cursor: "pointer", fontSize: "16px", fontWeight: "700" }}
+          onClick={() => responder(false)}
+        >❌ ERRADO</button>
+      </div>
+      <div style={{ display: respondido ? "block" : "none" }}>
+        <div style={acertou ? S.feedbackOk : S.feedbackErr}>
+          {acertou ? "✅ Acertou!" : `❌ Errou! A afirmação é ${q.correto ? "CORRETA" : "ERRADA"}.`}
+        </div>
+        <button
+          style={{ ...S.btn, marginTop: "8px", color: "#ffc048", borderColor: "#7a5a10" }}
+          onClick={() => setShowJust(j => !j)}
+        >
+          {showJust ? "Ocultar Justificativa" : "📖 Ver Justificativa"}
+        </button>
+        <div style={{ display: showJust ? "block" : "none" }}>
+          <div style={S.feedbackWarn}>📖 {q.just}</div>
+        </div>
+        <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+          {idx + 1 < ordem.length ? "Próxima →" : "Ver Resultado"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Complete as Lacunas
+// ═══════════════════════════════════════════════════════════════
+function QuizLacunas({ setScreen }) {
+  const [idx, setIdx] = useState(0);
+  const [resposta, setResposta] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [acertou, setAcertou] = useState(false);
+  const [score, setScore] = useState(0);
+  const [showDica, setShowDica] = useState(false);
+  const [ordem] = useState(() => [...QUIZ_LAC_DATA].sort(() => Math.random() - 0.5));
+
+  function verificar() {
+    if (!resposta.trim()) return;
+    const ok = resposta.trim().toLowerCase().includes(ordem[idx].resp.toLowerCase()) ||
+               ordem[idx].resp.toLowerCase().includes(resposta.trim().toLowerCase());
+    if (ok) setScore(s => s + 1);
+    setAcertou(ok);
+    setShowFeedback(true);
+  }
+
+  function proximo() {
+    setIdx(i => i + 1);
+    setResposta("");
+    setShowFeedback(false);
+    setShowDica(false);
+  }
+
+  function reiniciar() {
+    setIdx(0);
+    setResposta("");
+    setScore(0);
+    setShowFeedback(false);
+    setShowDica(false);
+  }
+
+  if (idx >= ordem.length) {
+    const pct = Math.round((score / ordem.length) * 100);
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>📝 Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{score}/{ordem.length}</div>
+          <div style={{ fontSize: "28px", marginTop: "8px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = ordem[idx];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>📝 Complete as Lacunas</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Questão {idx + 1}/{ordem.length} · Acertos: {score}
+      </div>
+      <div style={S.progress((idx / ordem.length) * 100)}>
+        <div style={S.progressFill((idx / ordem.length) * 100)} />
+      </div>
+      <div style={{ ...S.card, fontSize: "15px", lineHeight: "1.8", marginBottom: "16px" }}>
+        {q.antes}
+        <span style={{ background: "#c8a84b22", border: "1px dashed #c8a84b", borderRadius: "6px", padding: "2px 12px", color: "#c8a84b", fontWeight: "700" }}>
+          {showFeedback ? q.resp : "___________"}
+        </span>
+        {q.depois}
+      </div>
+      <input
+        style={{ ...S.input, marginBottom: "8px", fontSize: "16px" }}
+        placeholder="Digite a palavra que completa a lacuna..."
+        value={resposta}
+        onChange={e => setResposta(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && !showFeedback && verificar()}
+        disabled={showFeedback}
+      />
+      <div style={{ display: !showFeedback ? "block" : "none" }}>
+        <button style={{ ...S.btnGold, width: "100%", marginBottom: "8px" }} onClick={verificar}>✓ Verificar</button>
+        <button style={{ ...S.btn, color: "#ffc048" }} onClick={() => setShowDica(d => !d)}>
+          {showDica ? "Ocultar Dica" : "💡 Ver Dica"}
+        </button>
+        <div style={{ display: showDica ? "block" : "none" }}>
+          <div style={S.dica}>💡 {q.dica}</div>
+        </div>
+      </div>
+      <div style={{ display: showFeedback ? "block" : "none" }}>
+        <div style={acertou ? S.feedbackOk : S.feedbackErr}>
+          {acertou ? "✅ Correto!" : `❌ Resposta correta: "${q.resp}"`}
+        </div>
+        <div style={S.dica}>💡 {q.dica}</div>
+        <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+          {idx + 1 < ordem.length ? "Próxima →" : "Ver Resultado"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Definições
+// ═══════════════════════════════════════════════════════════════
+function QuizDefinicoes({ setScreen }) {
+  const [idx, setIdx] = useState(0);
+  const [resposta, setResposta] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showDef, setShowDef] = useState(false);
+  const [score, setScore] = useState(0);
+  const [avaliacao, setAvaliacao] = useState(null);
+  const [ordem] = useState(() => [...QUIZ_DEF_DATA].sort(() => Math.random() - 0.5));
+
+  function verificar() {
+    if (!resposta.trim()) return;
+    setShowFeedback(true);
+  }
+
+  function avaliar(ok) {
+    if (ok) setScore(s => s + 1);
+    setAvaliacao(ok);
+  }
+
+  function proximo() {
+    setIdx(i => i + 1);
+    setResposta("");
+    setShowFeedback(false);
+    setShowDef(false);
+    setAvaliacao(null);
+  }
+
+  function reiniciar() {
+    setIdx(0);
+    setResposta("");
+    setScore(0);
+    setShowFeedback(false);
+    setShowDef(false);
+    setAvaliacao(null);
+  }
+
+  if (idx >= ordem.length) {
+    const pct = Math.round((score / ordem.length) * 100);
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>📚 Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{score}/{ordem.length}</div>
+          <div style={{ fontSize: "28px", marginTop: "8px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = ordem[idx];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>📚 Definições</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Termo {idx + 1}/{ordem.length} · Acertos: {score}
+      </div>
+      <div style={S.progress((idx / ordem.length) * 100)}>
+        <div style={S.progressFill((idx / ordem.length) * 100)} />
+      </div>
+      <div style={{ ...S.cardGold, textAlign: "center", fontSize: "20px", fontWeight: "700", padding: "20px", marginBottom: "16px" }}>
+        {q.termo}
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Escreva a definição com suas próprias palavras:
+      </div>
+      <textarea
+        style={{ ...S.input, minHeight: "100px", resize: "vertical", marginBottom: "8px" }}
+        placeholder="Digite sua definição aqui..."
+        value={resposta}
+        onChange={e => setResposta(e.target.value)}
+        disabled={showFeedback}
+      />
+      <div style={{ display: !showFeedback ? "block" : "none" }}>
+        <button style={{ ...S.btnGold, width: "100%" }} onClick={verificar}>📖 Ver Definição Oficial</button>
+      </div>
+      <div style={{ display: showFeedback ? "block" : "none" }}>
+        <div style={S.feedbackWarn}>
+          <strong>Definição oficial:</strong><br />{q.def}
+        </div>
+        <div style={{ marginTop: "10px", color: "#e8ecf4", fontSize: "14px" }}>Sua resposta estava correta?</div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+          <button
+            style={{ flex: 1, background: avaliacao === true ? "#0d3320" : "#1e2c47", color: avaliacao === true ? "#4dff91" : "#e8ecf4", border: avaliacao === true ? "2px solid #2d7a4f" : "1px solid #2d3e5e", borderRadius: "10px", padding: "12px", cursor: "pointer", fontWeight: "700" }}
+            onClick={() => avaliar(true)}
+          >✅ Acertei</button>
+          <button
+            style={{ flex: 1, background: avaliacao === false ? "#330d0d" : "#1e2c47", color: avaliacao === false ? "#ff8888" : "#e8ecf4", border: avaliacao === false ? "2px solid #7a2d2d" : "1px solid #2d3e5e", borderRadius: "10px", padding: "12px", cursor: "pointer", fontWeight: "700" }}
+            onClick={() => avaliar(false)}
+          >❌ Errei</button>
+        </div>
+        <div style={{ display: avaliacao !== null ? "block" : "none" }}>
+          <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+            {idx + 1 < ordem.length ? "Próximo →" : "Ver Resultado"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Correlacione
+// ═══════════════════════════════════════════════════════════════
+function QuizCorrelacione({ setScreen }) {
+  const [setIdx, setSetIdx] = useState(0);
+  const [respostas, setRespostas] = useState({});
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [score, setScore] = useState(0);
+  const [totalAcertos, setTotalAcertos] = useState(0);
+  const [totalQuestoes, setTotalQuestoes] = useState(0);
+
+  const conjunto = CORR_SETS[setIdx];
+  const opcoes = conjunto.pares.map(p => p.def);
+  const shuffled = [...opcoes].sort(() => Math.random() - 0.5);
+
+  function verificar() {
+    let acertos = 0;
+    conjunto.pares.forEach((par, i) => {
+      if (respostas[i] === par.def) acertos++;
+    });
+    setScore(acertos);
+    setTotalAcertos(t => t + acertos);
+    setTotalQuestoes(t => t + conjunto.pares.length);
+    setShowFeedback(true);
+  }
+
+  function proximo() {
+    setSetIdx(i => i + 1);
+    setRespostas({});
+    setShowFeedback(false);
+  }
+
+  function reiniciar() {
+    setSetIdx(0);
+    setRespostas({});
+    setShowFeedback(false);
+    setScore(0);
+    setTotalAcertos(0);
+    setTotalQuestoes(0);
+  }
+
+  if (setIdx >= CORR_SETS.length) {
+    const pct = totalQuestoes > 0 ? Math.round((totalAcertos / totalQuestoes) * 100) : 0;
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>🔗 Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{totalAcertos}/{totalQuestoes}</div>
+          <div style={{ fontSize: "28px", marginTop: "8px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>🔗 Correlacione</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Conjunto {setIdx + 1}/{CORR_SETS.length}
+      </div>
+      <div style={S.progress(((setIdx) / CORR_SETS.length) * 100)}>
+        <div style={S.progressFill(((setIdx) / CORR_SETS.length) * 100)} />
+      </div>
+      <div style={{ ...S.cardGold, marginBottom: "16px" }}>
+        <div style={S.h3}>🔗 {conjunto.titulo}</div>
+        <div style={{ color: "#6a7a98", fontSize: "13px" }}>Selecione a correspondência para cada termo:</div>
+      </div>
+      {conjunto.pares.map((par, i) => {
+        const correto = showFeedback && respostas[i] === par.def;
+        const errado = showFeedback && respostas[i] !== par.def;
+        return (
+          <div key={i} style={{ ...S.card, borderColor: showFeedback ? (correto ? "#2d7a4f" : "#7a2d2d") : "#1e2c47", marginBottom: "10px" }}>
+            <div style={{ fontWeight: "700", color: "#c8a84b", marginBottom: "8px" }}>{par.termo}</div>
+            <select
+              style={{ ...S.select, borderColor: showFeedback ? (correto ? "#2d7a4f" : "#7a2d2d") : "#2d3e5e", color: showFeedback ? (correto ? "#4dff91" : "#ff8888") : "#e8ecf4" }}
+              value={respostas[i] || ""}
+              onChange={e => setRespostas(r => ({ ...r, [i]: e.target.value }))}
+              disabled={showFeedback}
+            >
+              <option value="">-- Selecione a correspondência --</option>
+              {shuffled.map((op, j) => (
+                <option key={j} value={op}>{op}</option>
+              ))}
+            </select>
+            <div style={{ display: showFeedback ? "block" : "none" }}>
+              <div style={{ fontSize: "13px", marginTop: "6px", color: correto ? "#4dff91" : "#ff8888" }}>
+                {correto ? "✅ Correto!" : `❌ Correto: ${par.def}`}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      <div style={{ display: !showFeedback ? "block" : "none" }}>
+        <button
+          style={{ ...S.btnGold, width: "100%" }}
+          onClick={verificar}
+          disabled={Object.keys(respostas).length < conjunto.pares.length}
+        >
+          ✓ Verificar Respostas ({Object.keys(respostas).length}/{conjunto.pares.length} selecionadas)
+        </button>
+      </div>
+      <div style={{ display: showFeedback ? "block" : "none" }}>
+        <div style={score === conjunto.pares.length ? S.feedbackOk : S.feedbackWarn}>
+          Acertos: {score}/{conjunto.pares.length}
+        </div>
+        <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+          {setIdx + 1 < CORR_SETS.length ? "Próximo Conjunto →" : "Ver Resultado"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE: Cite e Liste
+// ═══════════════════════════════════════════════════════════════
+function QuizCiteListe({ setScreen }) {
+  const [idx, setIdx] = useState(0);
+  const [showResposta, setShowResposta] = useState(false);
+  const [showDica, setShowDica] = useState(false);
+  const [scores, setScores] = useState([]);
+  const [ordem] = useState(() => [...CITE_LISTE_DATA].sort(() => Math.random() - 0.5));
+
+  function avaliar(ok) {
+    setScores(s => [...s, ok]);
+  }
+
+  function proximo() {
+    setIdx(i => i + 1);
+    setShowResposta(false);
+    setShowDica(false);
+  }
+
+  function reiniciar() {
+    setIdx(0);
+    setShowResposta(false);
+    setShowDica(false);
+    setScores([]);
+  }
+
+  if (idx >= ordem.length) {
+    const acertos = scores.filter(Boolean).length;
+    const pct = Math.round((acertos / ordem.length) * 100);
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+          <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+          <h2 style={{ ...S.h2, margin: 0 }}>📋 Resultado</h2>
+        </div>
+        <div style={S.score}>
+          <div style={S.scoreNum}>{acertos}/{ordem.length}</div>
+          <div style={{ fontSize: "28px", marginTop: "8px" }}>{pct}%</div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <button style={{ ...S.btnGold, flex: 1 }} onClick={reiniciar}>🔄 Reiniciar</button>
+          <button style={{ ...S.btnOutline, flex: 1 }} onClick={() => setScreen("home")}>← Início</button>
+        </div>
+      </div>
+    );
+  }
+
+  const q = ordem[idx];
+  const jaAvaliou = scores.length > idx;
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <button style={{ ...S.btnOutline, width: "auto", padding: "8px 14px" }} onClick={() => setScreen("home")}>← Início</button>
+        <h2 style={{ ...S.h2, margin: 0 }}>📋 Cite e Liste</h2>
+      </div>
+      <div style={{ color: "#6a7a98", fontSize: "13px", marginBottom: "8px" }}>
+        Questão {idx + 1}/{ordem.length} · Acertos: {scores.filter(Boolean).length}
+      </div>
+      <div style={S.progress((idx / ordem.length) * 100)}>
+        <div style={S.progressFill((idx / ordem.length) * 100)} />
+      </div>
+      <div style={{ ...S.cardGold, fontSize: "16px", fontWeight: "700", lineHeight: "1.5", padding: "20px", marginBottom: "16px" }}>
+        {q.titulo}
+      </div>
+      <div style={{ display: !showDica ? "block" : "none" }}>
+        <button style={{ ...S.btn, color: "#ffc048" }} onClick={() => setShowDica(true)}>💡 Ver Dica</button>
+      </div>
+      <div style={{ display: showDica ? "block" : "none" }}>
+        <div style={S.dica}>💡 {q.dica}</div>
+      </div>
+      <div style={{ display: !showResposta ? "block" : "none", marginTop: "10px" }}>
+        <button style={{ ...S.btnGold, width: "100%" }} onClick={() => setShowResposta(true)}>
+          📋 Ver Resposta Completa
+        </button>
+      </div>
+      <div style={{ display: showResposta ? "block" : "none", marginTop: "10px" }}>
+        <div style={{ ...S.card, borderColor: "#2d7a4f" }}>
+          <div style={{ color: "#4dff91", fontWeight: "700", marginBottom: "10px" }}>✅ Resposta:</div>
+          {q.itens.map((item, j) => (
+            <div key={j} style={{ display: "flex", gap: "8px", marginBottom: "8px", fontSize: "14px", alignItems: "flex-start" }}>
+              <span style={{ color: "#c8a84b", fontWeight: "700", minWidth: "20px" }}>{j + 1}.</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: jaAvaliou ? "none" : "block" }}>
+          <div style={{ marginTop: "10px", color: "#e8ecf4", fontSize: "14px" }}>Você sabia a resposta?</div>
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button style={{ flex: 1, background: "#1e2c47", color: "#4dff91", border: "1px solid #2d7a4f", borderRadius: "10px", padding: "12px", cursor: "pointer", fontWeight: "700" }} onClick={() => avaliar(true)}>✅ Sabia!</button>
+            <button style={{ flex: 1, background: "#1e2c47", color: "#ff8888", border: "1px solid #7a2d2d", borderRadius: "10px", padding: "12px", cursor: "pointer", fontWeight: "700" }} onClick={() => avaliar(false)}>❌ Não sabia</button>
+          </div>
+        </div>
+        <div style={{ display: jaAvaliou ? "block" : "none" }}>
+          <button style={{ ...S.btnGold, width: "100%", marginTop: "10px" }} onClick={proximo}>
+            {idx + 1 < ordem.length ? "Próxima →" : "Ver Resultado"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APP PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
+const TABS = [
+  { id: "home", label: "🏠 Início" },
+  { id: "super-resumo", label: "⚡ Super Resumo" },
+  { id: "resumo-completo", label: "📖 Resumo" },
+  { id: "mapa-mental", label: "🧠 Mapa Mental" },
+  { id: "flashcards", label: "🃏 Flashcards" },
+  { id: "pdf-busca", label: "🔍 Busca" },
+  { id: "quiz-multiple", label: "🎯 Múltipla Escolha" },
+  { id: "quiz-ce", label: "✅ Certo/Errado" },
+  { id: "quiz-lacunas", label: "📝 Lacunas" },
+  { id: "quiz-definicoes", label: "📚 Definições" },
+  { id: "quiz-correlacione", label: "🔗 Correlacione" },
+  { id: "quiz-cite-liste", label: "📋 Cite e Liste" },
+];
+
+export default function App() {
+  const [screen, setScreen] = useState("home");
+
+  return (
+    <div style={S.app}>
+      <div style={S.header}>
+        <div style={S.headerTop}>
+          <span style={S.anchor}>⚓</span>
+          <div>
+            <div style={S.appTitle}>Gestão 2026</div>
+            <div style={S.appSub}>Estudo interativo · Marinha do Brasil</div>
+          </div>
+        </div>
+        <div style={S.navScroll}>
+          {TABS.map(tab => (
+            <button key={tab.id} style={S.navBtn(screen === tab.id)} onClick={() => setScreen(tab.id)}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={S.main}>
+        {screen === "home" && <HomeScreen setScreen={setScreen} />}
+        {screen === "super-resumo" && <SuperResumoScreen setScreen={setScreen} />}
+        {screen === "resumo-completo" && <ResumoCompletoScreen setScreen={setScreen} />}
+        {screen === "mapa-mental" && <MapaMentalScreen setScreen={setScreen} />}
+        {screen === "flashcards" && <FlashcardsScreen setScreen={setScreen} />}
+        {screen === "pdf-busca" && <PdfBuscaScreen setScreen={setScreen} />}
+        {screen === "quiz-multiple" && <QuizMultiple setScreen={setScreen} />}
+        {screen === "quiz-ce" && <QuizCertoErrado setScreen={setScreen} />}
+        {screen === "quiz-lacunas" && <QuizLacunas setScreen={setScreen} />}
+        {screen === "quiz-definicoes" && <QuizDefinicoes setScreen={setScreen} />}
+        {screen === "quiz-correlacione" && <QuizCorrelacione setScreen={setScreen} />}
+        {screen === "quiz-cite-liste" && <QuizCiteListe setScreen={setScreen} />}
+      </div>
+    </div>
+  );
+}

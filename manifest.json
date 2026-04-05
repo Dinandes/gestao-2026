@@ -1,0 +1,26 @@
+{
+  "name": "Gestão 2026 — Estudo Interativo",
+  "short_name": "Gestão 2026",
+  "description": "Aplicativo de estudos interativo para a prova de Gestão da Marinha do Brasil. Cobre Qualidade (ISO, GQT, Juran), PDCA, 5S, Maslow, Herzberg, Brainstorming, Programa Netuno e mais.",
+  "start_url": "/gestao-2026/",
+  "scope": "/gestao-2026/",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#c8a84b",
+  "lang": "pt",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
